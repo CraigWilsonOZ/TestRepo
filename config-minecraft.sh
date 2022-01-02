@@ -65,9 +65,7 @@ rcon "save-on"
 ## Delete older backups
 find /mnt/minecraft/backups/ -type f -mtime +31 -name '*.gz' -delete
 EOF
-# Setting execute permissions backup.sh
-chown -R minecraft:minecraft /mnt/minecraft/
-chmod +x /mnt/minecraft/tools/backup.sh
+
 # Creating and accepting EULA
 cat > /mnt/minecraft/server/eula.txt <<EOF
 #By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).
@@ -127,6 +125,10 @@ resource-pack-sha1=
 spawn-protection=16
 max-world-size=29999984EOF
 EOF
+
+# Setting execute permissions backup.sh and ownership
+chown -R minecraft:minecraft /mnt/minecraft/
+chmod +x /mnt/minecraft/tools/backup.sh
 
 echo "[+] Create Systemd Unit File"
 ## Creating SystemD service
