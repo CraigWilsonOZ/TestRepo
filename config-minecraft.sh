@@ -36,13 +36,14 @@ sudo su minecraft
 echo "User:" $(whoami)
 
 echo "[+] Setting Minecraft User Environment"
-# Creating folders and downloading applications
-sudo su minecraft
 # Creating directorys for Minecrat
-mkdir -p /mnt/minecraft/{backups,tools,server}
+mkdir -p /mnt/minecraft/backups
+mkdir -p /mnt/minecraft/tools
+mkdir -p /mnt/minecraft/server
+
 # Cloneing down MCRCON
 git clone https://github.com/Tiiffi/mcrcon.git /mnt/minecraft/tools/mcrcon
-cd ~/tools/mcrcon
+cd /mnt/minecraft/tools/mcrcon
 # Performing MCRCON build
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # run ./mcrcon -v to test build if required
@@ -65,6 +66,7 @@ rcon "save-on"
 find /mnt/minecraft/backups/ -type f -mtime +31 -name '*.gz' -delete
 EOF
 # Setting execute permissions backup.sh
+chown -R minecraft:minecraft /mnt/minecraft/
 chmod +x /mnt/minecraft/tools/backup.sh
 # Creating and accepting EULA
 cat > /mnt/minecraft/server/eula.txt <<EOF
@@ -125,10 +127,6 @@ resource-pack-sha1=
 spawn-protection=16
 max-world-size=29999984EOF
 EOF
-
-echo "[+] Switching back to user"
-# Changing to minecraft user to install minecraft
-exit
 
 echo "[+] Create Systemd Unit File"
 ## Creating SystemD service
