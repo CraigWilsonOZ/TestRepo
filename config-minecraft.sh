@@ -39,15 +39,15 @@ echo "[+] Setting Minecraft User Environment"
 # Creating folders and downloading applications
 sudo su minecraft
 # Creating directorys for Minecrat
-mkdir -p ~/{backups,tools,server}
+mkdir -p /mnt/minecraft/{backups,tools,server}
 # Cloneing down MCRCON
-git clone https://github.com/Tiiffi/mcrcon.git ~/tools/mcrcon
+git clone https://github.com/Tiiffi/mcrcon.git /mnt/minecraft/tools/mcrcon
 cd ~/tools/mcrcon
 # Performing MCRCON build
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # run ./mcrcon -v to test build if required
 # Downloading Minecraft
-wget https://launcher.mojang.com/v1/objects/125e5adf40c659fd3bce3e66e67a16bb49ecc1b9/server.jar -P ~/server
+wget https://launcher.mojang.com/v1/objects/125e5adf40c659fd3bce3e66e67a16bb49ecc1b9/server.jar -P /mnt/minecraft/server
 # Creating Backup Script
 cat > /mnt/minecraft/tools/backup1.sh <<EOF
 #!/bin/bash
@@ -67,13 +67,13 @@ EOF
 # Setting execute permissions backup.sh
 chmod +x /mnt/minecraft/tools/backup.sh
 # Creating and accepting EULA
-cat > ~/server/eula.txt <<EOF
+cat > /mnt/minecraft/server/eula.txt <<EOF
 #By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).
 #Sat Jan 01 10:54:04 UTC 2022
 eula=true
 EOF
 # Creating Server Properties File
-cat > ~/server/server.properties <<EOF
+cat > /mnt/minecraft/server/server.properties <<EOF
 #Minecraft server properties
 #Sat Jan 01 18:59:06 UTC 2022
 enable-jmx-monitoring=false
