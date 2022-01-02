@@ -13,7 +13,6 @@ echo -e "\n"
 sleep 6
 
 # Variables
-MINECRAFTPATH = "/mnt" 
 PASSWORD=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
 
 # Updating server install and Python Configuration
@@ -29,11 +28,12 @@ sudo apt install openjdk-17-jre-headless -y
 
 echo "[+] Creating Minecraft User"
 # Creating user to run Minecraft under
-sudo useradd -r -m -U -d $MINECRAFTPATH/minecraft -s /bin/bash minecraft
+sudo useradd -r -m -U -d /mnt/minecraft -s /bin/bash minecraft
 
 echo "[+] Switching Minecraft User"
 # Changing to minecraft user to install minecraft
 sudo su minecraft
+echo "User:" $(whoami)
 
 echo "[+] Setting Minecraft User Environment"
 # Creating folders and downloading applications
@@ -49,23 +49,23 @@ gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # Downloading Minecraft
 wget https://launcher.mojang.com/v1/objects/125e5adf40c659fd3bce3e66e67a16bb49ecc1b9/server.jar -P ~/server
 # Creating Backup Script
-cat > $MINECRAFTPATH/minecraft/tools/backup1.sh <<EOF
+cat > /mnt/minecraft/tools/backup1.sh <<EOF
 #!/bin/bash
 
 function rcon {
-$MINECRAFTPATH/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD "$1"
+/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD "$1"
 }
 
 rcon "save-off"
 rcon "save-all"
-tar -cvpzf $MINECRAFTPATH/minecraft/backups/server-$(date +%F-%H-%M).tar.gz $MINECRAFTPATH/minecraft/server
+tar -cvpzf /mnt/minecraft/backups/server-$(date +%F-%H-%M).tar.gz /mnt/minecraft/server
 rcon "save-on"
 
 ## Delete older backups
-find $MINECRAFTPATH/minecraft/backups/ -type f -mtime +31 -name '*.gz' -delete
+find /mnt/minecraft/backups/ -type f -mtime +31 -name '*.gz' -delete
 EOF
 # Setting execute permissions backup.sh
-chmod +x $MINECRAFTPATH/minecraft/tools/backup.sh
+chmod +x /mnt/minecraft/tools/backup.sh
 # Creating and accepting EULA
 cat > ~/server/eula.txt <<EOF
 #By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).
@@ -166,6 +166,6 @@ sudo ufw allow 25565/tcp
 
 echo "[+] Creating cronjob for backup"
 ## Adding firewall rule
-sudo (crontab -l ; echo "0 23 * * * $MINECRAFTPATH/minecraft/tools/backup.sh") | crontab
+sudo (crontab -l ; echo "0 23 * * * /mnt/minecraft/tools/backup.sh") | crontab
 
 echo "[+] Setup completed"
