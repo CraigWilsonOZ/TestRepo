@@ -54,7 +54,7 @@ cat > /mnt/minecraft/tools/backup.sh <<EOF
 #!/bin/bash
 
 function rcon {
-/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD \"\$1\"
+/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD "\$1"
 }
 
 rcon "save-off"
