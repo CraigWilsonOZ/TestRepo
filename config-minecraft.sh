@@ -50,7 +50,7 @@ gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # Downloading Minecraft
 wget https://launcher.mojang.com/v1/objects/125e5adf40c659fd3bce3e66e67a16bb49ecc1b9/server.jar -P /mnt/minecraft/server
 # Creating Backup Script
-cat > /mnt/minecraft/tools/backup1.sh <<EOF
+cat > /mnt/minecraft/tools/backup.sh <<EOF
 #!/bin/bash
 
 function rcon {
@@ -126,10 +126,6 @@ spawn-protection=16
 max-world-size=29999984EOF
 EOF
 
-# Setting execute permissions backup.sh and ownership
-chown -R minecraft:minecraft /mnt/minecraft/
-chmod +x /mnt/minecraft/tools/backup.sh
-
 echo "[+] Create Systemd Unit File"
 ## Creating SystemD service
 sudo cat >/etc/systemd/system/minecraft.service <<EOF
@@ -153,6 +149,11 @@ ExecStop=/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD s
 [Install]
 WantedBy=multi-user.target
 EOF
+
+# Setting execute permissions backup.sh and ownership
+chown -R minecraft:minecraft /mnt/minecraft/
+chmod +x /mnt/minecraft/tools/backup.sh
+
 # Reloading Systemd configuration
 sudo systemctl daemon-reload
 
@@ -166,6 +167,6 @@ sudo ufw allow 25565/tcp
 
 echo "[+] Creating cronjob for backup"
 ## Adding firewall rule
-sudo (crontab -l ; echo "0 23 * * * /mnt/minecraft/tools/backup.sh") | crontab
+sudo crontab -l ; echo "0 23 * * * /mnt/minecraft/tools/backup.sh" | crontab
 
 echo "[+] Setup completed"
