@@ -148,7 +148,7 @@ PrivateDevices=true
 NoNewPrivileges=true
 WorkingDirectory=/opt/minecraft/server
 ExecStart=/usr/bin/java -Xmx1024M -Xms1024M -jar server.jar nogui
-ExecStop=/opt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD stop
+ExecStop=/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD stop
 
 [Install]
 WantedBy=multi-user.target
