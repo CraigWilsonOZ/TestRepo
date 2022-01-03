@@ -39,13 +39,15 @@ then
     echo "Creating device name"
     LUN=1
     DISKSYSTEMPATH=$(ls -d /sys/block/sd*/device/scsi_device/* |grep 1.0.0.0 |awk -F '[/]' '{print "/dev/"$4'})
-    DISKSYSTEMPATH=$DISKSYSTEMPATH$LUN
     echo $DISKSYSTEMPATH
     echo "Creating Partions"
     sudo parted $DISKSYSTEMPATH --script mklabel gpt mkpart xfspart xfs 0% 100%
     sudo mkfs.xfs $DISKSYSTEMPATH -f
     sudo partprobe $DISKSYSTEMPATH
-
+    
+    DISKSYSTEMPATH=$DISKSYSTEMPATH$LUN
+    echo $DISKSYSTEMPATH
+    
     echo "Creating mount point"
     sudo mkdir /datadrive
 
