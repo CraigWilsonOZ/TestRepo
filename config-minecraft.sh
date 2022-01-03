@@ -45,8 +45,8 @@ then
     sudo mkfs.xfs $DISKSYSTEMPATH -f
     sudo partprobe $DISKSYSTEMPATH
     
-    DISKSYSTEMPATH=$DISKSYSTEMPATH$LUN
-    echo $DISKSYSTEMPATH
+    # DISKSYSTEMPATH=$DISKSYSTEMPATH$LUN
+    # echo $DISKSYSTEMPATH
     
     echo "Creating mount point"
     sudo mkdir /datadrive
