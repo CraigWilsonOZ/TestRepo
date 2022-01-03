@@ -12,8 +12,54 @@ echo "hit Ctrl+C to quit"
 echo -e "\n"
 sleep 6
 
+## Checking if script has recorded a completed flag to stop overwriting configuration
+test -f /datadrive/minecraft/.mc.done && echo "$FILE exists.";exit
+
 # Variables
 PASSWORD=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
+
+# Mounting Data Drive
+fstab=/etc/fstab
+
+# SCSI LUN - 4 numbers a:b:c:d
+# a = Hostadapter ID
+# b = SCSI channel
+# c = Device ID
+# d = LUN
+
+if ! grep -q "minecraft" $fstab;
+then
+    echo "Listing current disks"
+    lsblk -o NAME,HCTL,SIZE,MOUNTPOINT | grep -i "1:0:0:0"
+    ls -d /sys/block/sd*/device/scsi_device/* |awk -F '[:/]' '{print "/dev/"$4,"- SCSI",$7":"$9}'
+    echo "Creating device name"
+    LUN=1
+    DISKSYSTEMPATH=$(ls -d /sys/block/sd*/device/scsi_device/* |grep 1.0.0.0 |awk -F '[/]' '{print "/dev/"$4'})
+    DISKSYSTEMPATH=$DISKSYSTEMPATH$LUN
+    echo $DISKSYSTEMPATH
+    echo "Creating Partions"
+    sudo parted $DISKSYSTEMPATH --script mklabel gpt mkpart xfspart xfs 0% 100%
+    sudo mkfs.xfs $DISKSYSTEMPATH -f
+    sudo partprobe $DISKSYSTEMPATH
+
+    echo "Creating mount point"
+    sudo mkdir /datadrive
+
+    echo "Finding UUID"
+    sudo blkid
+    UUID=$(sudo blkid |grep $DISKSYSTEMPATH | awk -F '[:"]' '{print $3}')
+    echo $UUID
+    echo "Updating FSTAB"
+    FSTABUPDATE="UUID=${UUID}   /datadrive   xfs   defaults,nofail   1   2"
+    echo $FSTABUPDATE
+    echo "# minecraft" >> /etc/fstab
+    echo $FSTABUPDATE >> /etc/fstab
+
+    echo "Mounting drive for use"
+    sudo mount $DISKSYSTEMPATH /datadrive
+else
+    echo "Entry in fstab exists."
+fi
 
 # Updating server install and Python Configuration
 echo "[+] Performing Update to system"
@@ -28,7 +74,7 @@ sudo apt install openjdk-17-jre-headless -y
 
 echo "[+] Creating Minecraft User"
 # Creating user to run Minecraft under
-sudo useradd -r -m -U -d /mnt/minecraft -s /bin/bash minecraft
+sudo useradd -r -m -U -d /datadrive/minecraft -s /bin/bash minecraft
 
 echo "[+] Switching Minecraft User"
 # Changing to minecraft user to install minecraft
@@ -37,43 +83,43 @@ echo "User:" $(whoami)
 
 echo "[+] Setting Minecraft User Environment"
 # Creating directorys for Minecrat
-mkdir -p /mnt/minecraft/backups
-mkdir -p /mnt/minecraft/tools
-mkdir -p /mnt/minecraft/server
+mkdir -p /datadrive/minecraft/backups
+mkdir -p /datadrive/minecraft/tools
+mkdir -p /datadrive/minecraft/server
 
 # Cloneing down MCRCON
-git clone https://github.com/Tiiffi/mcrcon.git /mnt/minecraft/tools/mcrcon
-cd /mnt/minecraft/tools/mcrcon
+git clone https://github.com/Tiiffi/mcrcon.git /datadrive/minecraft/tools/mcrcon
+cd /datadrive/minecraft/tools/mcrcon
 # Performing MCRCON build
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # run ./mcrcon -v to test build if required
 # Downloading Minecraft
-wget https://launcher.mojang.com/v1/objects/125e5adf40c659fd3bce3e66e67a16bb49ecc1b9/server.jar -P /mnt/minecraft/server
+wget https://launcher.mojang.com/v1/objects/125e5adf40c659fd3bce3e66e67a16bb49ecc1b9/server.jar -P /datadrive/minecraft/server
 # Creating Backup Script
-cat > /mnt/minecraft/tools/backup.sh <<EOF
+cat > /datadrive/minecraft/tools/backup.sh <<EOF
 #!/bin/bash
 
 function rcon {
-/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD "\$1"
+/datadrive/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD "\$1"
 }
 
 rcon "save-off"
 rcon "save-all"
-tar -cvpzf /mnt/minecraft/backups/server-$(date +%F-%H-%M).tar.gz /mnt/minecraft/server
+tar -cvpzf /datadrive/minecraft/backups/server-\$(date +%F-%H-%M).tar.gz /datadrive/minecraft/server
 rcon "save-on"
 
 ## Delete older backups
-find /mnt/minecraft/backups/ -type f -mtime +31 -name '*.gz' -delete
+find /datadrive/minecraft/backups/ -type f -mtime +31 -name '*.gz' -delete
 EOF
 
 # Creating and accepting EULA
-cat > /mnt/minecraft/server/eula.txt <<EOF
+cat > /datadrive/minecraft/server/eula.txt <<EOF
 #By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).
 #Sat Jan 01 10:54:04 UTC 2022
 eula=true
 EOF
 # Creating Server Properties File
-cat > /mnt/minecraft/server/server.properties <<EOF
+cat > /datadrive/minecraft/server/server.properties <<EOF
 #Minecraft server properties
 #Sat Jan 01 18:59:06 UTC 2022
 enable-jmx-monitoring=false
@@ -128,7 +174,7 @@ EOF
 
 echo "[+] Create Systemd Unit File"
 ## Creating SystemD service
-sudo cat >/etc/systemd/system/minecraft.service <<EOF
+sudo cat > /etc/systemd/system/minecraft.service <<EOF
 [Unit]
 Description=Minecraft Server
 After=network.target
@@ -142,17 +188,31 @@ ProtectHome=true
 ProtectSystem=full
 PrivateDevices=true
 NoNewPrivileges=true
-WorkingDirectory=/mnt/minecraft/server
+WorkingDirectory=/datadrive/minecraft/server
 ExecStart=/usr/bin/java -Xmx2048M -Xms2048M -jar server.jar nogui
-ExecStop=/mnt/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD stop
+ExecStop=/datadrive/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD stop
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
+echo "[+] Create RCON Connection script"
+## Creating connection to rcon
+sudo cat > /datadrive/minecraft/tools/connect-mcrcon.sh <<EOF
+#!/bin/bash
+
+/datadrive/minecraft/tools/mcrcon/mcrcon -H 127.0.0.1 -P 25575 -p $PASSWORD
+
+EOF
+
+echo "[+] Creating file to record completed setup"
+## Adding crontab rule
+sudo touch /datadrive/minecraft/.mc.done
+
 # Setting execute permissions backup.sh and ownership
-chown -R minecraft:minecraft /mnt/minecraft/
-chmod +x /mnt/minecraft/tools/backup.sh
+chown -R minecraft:minecraft /datadrive/minecraft/
+chmod +x /datadrive/minecraft/tools/backup.sh
+chmod +x /datadrive/minecraft/tools/connect-mcrcon.sh
 
 # Reloading Systemd configuration
 sudo systemctl daemon-reload
@@ -166,7 +226,7 @@ echo "[+] Creating Minecraft local firewall rules"
 sudo ufw allow 25565/tcp
 
 echo "[+] Creating cronjob for backup"
-## Adding firewall rule
-sudo crontab -l ; echo "0 23 * * * /mnt/minecraft/tools/backup.sh" | crontab
+## Adding crontab rule
+sudo crontab -l ; echo "0 22 * * * /datadrive/minecraft/tools/backup.sh" | crontab
 
 echo "[+] Setup completed"
