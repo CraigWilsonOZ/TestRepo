@@ -13,7 +13,11 @@ echo -e "\n"
 sleep 6
 
 ## Checking if script has recorded a completed flag to stop overwriting configuration
-test -f /tmp/.mc.done && echo "$FILE exists.";exit
+if test -f /datadrive/minecraft/.mc.done;
+then
+    echo "File flag exists"
+    exit
+fi
 
 # Variables
 PASSWORD=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
@@ -207,7 +211,7 @@ EOF
 
 echo "[+] Creating file to record completed setup"
 ## Adding crontab rule
-sudo touch /tmp/.mc.done
+sudo touch /datadrive/minecraft/.mc.done
 
 # Setting execute permissions backup.sh and ownership
 chown -R minecraft:minecraft /datadrive/minecraft/
