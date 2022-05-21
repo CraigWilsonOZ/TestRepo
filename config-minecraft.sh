@@ -79,7 +79,7 @@ sudo apt update && sudo apt -y upgrade
 sudo apt install -y python2
 sudo update-alternatives --remove-all python
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
-sudo apt install net-tools
+sudo apt install net-tools unzip -y
 
 echo "[+] Installing Git Build-Essentials and OpenJDK"
 # Installing required software
@@ -101,6 +101,7 @@ mkdir -p /datadrive/minecraft/backups
 mkdir -p /datadrive/minecraft/tools
 mkdir -p /datadrive/minecraft/server
 mkdir -p /datadrive/minecraft/bedrock
+mkdir -p /datadrive/minecraft/logs
 
 echo "[+] Downloading MCRCON files"
 # Cloneing down MCRCON
@@ -289,6 +290,7 @@ echo "[+] Updating permissions"
 chown -R minecraft:minecraft /datadrive/minecraft/
 chmod +x /datadrive/minecraft/tools/backup.sh
 chmod +x /datadrive/minecraft/tools/connect-mcrcon.sh
+chmod +x /datadrive/minecraft/tools/start-bedrock.sh
 
 echo "[+] Reloading daemon service"
 # Reloading Systemd configuration
