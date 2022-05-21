@@ -24,8 +24,8 @@ PASSWORD=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
 MINECRAFTSERVER="https://launcher.mojang.com/v1/objects/c8f83c5655308435b3dcf03c06d9fe8740a77469/server.jar"
 MINECRAFTSERVERFILE="minecraft-server.1.18.2.jar"
 MINECRAFTBEDROCK="https://minecraft.azureedge.net/bin-linux/bedrock-server-1.18.33.02.zip"
-MINECRAFTBEDROCKFILE="bedrock-server-1.18.2.03.zip"
-OPENJDK="openjdk-18-jre-headless"
+MINECRAFTBEDROCKFILE="bedrock-server-1.18.33.02.zip"
+OPENJDK="openjdk-17-jre-headless"
 
 # Mounting Data Drive
 fstab=/etc/fstab
